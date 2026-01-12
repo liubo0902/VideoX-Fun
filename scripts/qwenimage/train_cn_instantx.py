@@ -38,7 +38,7 @@ from torchvision import transforms
 from tqdm.auto import tqdm
 
 import diffusers
-from diffusers import AutoencoderKLQwenImage, FlowMatchEulerDiscreteScheduler, QwenImageControlNetModel, QwenImagePipeline, QwenImageTransformer2DModel, FluxControlNetPipeline
+from diffusers import AutoencoderKLQwenImage, FlowMatchEulerDiscreteScheduler, QwenImageControlNetModel, QwenImagePipeline, QwenImageTransformer2DModel, QwenImageControlNetPipeline
 from diffusers.optimization import get_scheduler
 from diffusers.training_utils import (
     compute_density_for_timestep_sampling,
@@ -97,7 +97,7 @@ def log_validation(qwen_transformer, qwen_cn_transformer, args, accelerator, wei
     if not is_final_validation:
         qwen_transformer = accelerator.unwrap_model(qwen_transformer)
         qwen_cn_transformer = accelerator.unwrap_model(qwen_cn_transformer)
-        pipeline = FluxControlNetPipeline.from_pretrained(
+        pipeline = QwenImageControlNetPipeline.from_pretrained(
             args.pretrained_model_name_or_path,
             transformer=qwen_transformer,
             controlnet=qwen_cn_transformer,
@@ -105,7 +105,7 @@ def log_validation(qwen_transformer, qwen_cn_transformer, args, accelerator, wei
         )
     else:
         qwen_cn_transformer = QwenImageControlNetModel.from_pretrained(args.output_dir, torch_dtype=weight_dtype)
-        pipeline = FluxControlNetPipeline.from_pretrained(
+        pipeline = QwenImageControlNetPipeline.from_pretrained(
             args.pretrained_model_name_or_path,
             controlnet=qwen_cn_transformer,
             torch_dtype=weight_dtype,
