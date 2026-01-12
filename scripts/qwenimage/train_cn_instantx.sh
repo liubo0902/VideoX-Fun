@@ -1,0 +1,17 @@
+accelerate launch --mixed_precision "bf16" --use_fsdp --fsdp_version 2 --fsdp_auto_wrap_policy TRANSFORMER_BASED_WRAP --fsdp_sharding_strategy FULL_SHARD \
+  --fsdp_transformer_layer_cls_to_wrap QwenImageTransformerBlock --fsdp_cpu_ram_efficient_loading False --fsdp_state_dict_type FULL_STATE_DICT scripts/qwenimage/train_cn_instanx.py \
+  --pretrained_model_name_or_path="Qwen/Qwen-Image" \
+  --cn_pretrained_model_name_or_path="InstantX/Qwen-Image-ControlNet-Union" \
+  --jsonl_for_train="anns_cn.json" \ # [{"file_path": "xxx.png", "text": "xxx", "canny": "xxxx.png"}, {"file_path": "xxx.png", "text": "xxx", "canny": "xxxx.png"}]
+  --output_dir="canny-control" \
+  --mixed_precision="bf16" \
+  --train_batch_size=1 \
+  --gradient_checkpointing \
+  --gradient_accumulation_steps=1 \
+  --learning_rate=4e-5 \
+  --lr_scheduler="constant" \
+  --lr_warmup_steps=0 \
+  --checkpointing_steps=4000 \
+  --checkpoints_total_limit 20 \
+  --max_train_steps=500000 \
+  --seed="0" --image_column="file_path" --conditioning_image_column="canny" --caption_column="text" --proportion_empty_prompts 0.15
