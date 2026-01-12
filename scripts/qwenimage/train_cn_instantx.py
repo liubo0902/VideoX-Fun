@@ -1099,17 +1099,6 @@ def main(args):
                 # doing zeros on specified shapes for `prompt_embeds` and `pooled_prompt_embeds`
                 if args.offload:
                     text_encoding_pipeline = text_encoding_pipeline.to("cpu")
-                
-                with torch.no_grad():
-                    teacher_model_pred = qwen_transformer(
-                        hidden_states=noisy_model_input,
-                        timestep=timestep / 1000,
-                        encoder_hidden_states_mask=prompt_embeds_mask,
-                        encoder_hidden_states=prompt_embeds,
-                        return_dict=False,
-                        img_shapes=img_shapes,
-                        txt_seq_lens=prompt_embeds_mask.sum(dim=1).tolist(),
-                    )[0]
 
                 # Predict.
                 controlnet_block_samples = qwen_cn_transformer(
@@ -1141,7 +1130,7 @@ def main(args):
                 # flow-matching loss
                 loss = (model_pred.float() - target.float()) ** 2
 
-                loss = (weighting.float() * loss).mean() + 0.5 * ((teacher_model_pred.float() - model_pred.float())** 2).mean()
+                loss = (weighting.float() * loss).mean()
                 accelerator.backward(loss)
 
                 if accelerator.sync_gradients:
