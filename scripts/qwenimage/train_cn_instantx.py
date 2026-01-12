@@ -542,12 +542,6 @@ def parse_args(input_args=None):
         action="store_true",
         help="If we should only target the transformer blocks to train along with the input layer (`x_embedder`).",
     )
-    parser.add_argument(
-        "--guidance_scale",
-        type=float,
-        default=30.0,
-        help="the guidance scale used for transformer.",
-    )
 
     parser.add_argument(
         "--upcast_before_saving",
@@ -692,7 +686,7 @@ def prepare_train_dataset(dataset, accelerator, args):
             for image in examples[args.image_column]
         ]
         w, h = images[0].size
-        scale = math.sqrt(1024 * 1024 / (h * w))
+        scale = math.sqrt(args.resolution * args.resolution / (h * w))
         w = int(w * scale // 16 * 16)
         h = int(h * scale // 16 * 16)
         resize_transform = transforms.Resize((h, w), interpolation=transforms.InterpolationMode.BILINEAR)
