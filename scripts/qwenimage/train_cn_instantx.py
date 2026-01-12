@@ -48,8 +48,6 @@ from diffusers.training_utils import (
 from diffusers.utils import check_min_version, is_wandb_available, load_image, make_image_grid
 from diffusers.utils.hub_utils import load_or_create_model_card, populate_model_card
 from diffusers.utils.torch_utils import is_compiled_module
-from safetensors.torch import load_file
-from diffsynth.schedulers import FlowMatchScheduler
 
 
 if is_wandb_available():
