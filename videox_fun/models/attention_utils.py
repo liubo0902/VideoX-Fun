@@ -206,7 +206,25 @@ def flash_attention(
     # output
     return x.type(out_dtype)
 
+from torch.nn.attention.flex_attention import flex_attention, create_block_mask
 
+# 1. 定义 Mask 逻辑
+def swa_with_sinks_mask_mod(b, h, q_idx, kv_idx):
+    # 参数配置（通常作为闭包传入或直接定义）
+    window_size = 128
+    num_sinks = 4
+    
+    # 逻辑 A: Attention Sinks (始终关注前 N 个 token)
+    is_sink = kv_idx < num_sinks
+    
+    # 逻辑 B: Sliding Window (关注当前位置之前的窗口)
+    is_in_window = (q_idx - kv_idx) < window_size
+    
+    
+    # 合并逻辑：(是 Sink OR 在窗口内) AND 符合因果律
+    return (is_sink | is_in_window)
+
+flex_attention_compiled = torch.compile(flex_attention)
 def attention(
     q,
     k,
@@ -254,6 +272,23 @@ def attention(
             dtype=dtype,
             version=fa_version,
         )
+    elif attention_type == "FLEX_ATTENTION":
+        q = q.transpose(1, 2)
+        k = k.transpose(1, 2)
+        v = v.transpose(1, 2)
+        seq_len = q.shape[2]
+        device = q.device
+        block_mask = create_block_mask(
+            swa_with_sinks_mask_mod, 
+            B=None, H=None, Q_LEN=seq_len, KV_LEN=seq_len, 
+            device=device, compile=True, 
+        )
+        out = flex_attention_compiled(
+            q, k, v, 
+            block_mask=block_mask
+        )
+        out = out.transpose(1, 2).contiguous()
+
     else:
         if q_lens is not None or k_lens is not None:
             warnings.warn(
